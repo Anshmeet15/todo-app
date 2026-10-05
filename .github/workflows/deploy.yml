@@ -1,0 +1,29 @@
+name: Deploy
+
+on:
+  workflow_run:
+    workflows: ["CD"]
+    types: [completed]
+  workflow_dispatch:
+
+jobs:
+  deploy:
+    name: Deploy to AWS EC2
+    runs-on: ubuntu-latest
+    if: ${{ github.event_name == 'workflow_dispatch' || github.event.workflow_run.conclusion == 'success' }}
+
+    steps:
+      - name: Pull latest images and restart containers
+        uses: appleboy/ssh-action@v1.2.0
+        with:
+          host: ${{ secrets.EC2_HOST }}
+          username: ${{ secrets.EC2_USER }}
+          key: ${{ secrets.EC2_SSH_KEY }}
+          script: |
+            set -e
+            cd ~/todo-app
+            git pull --ff-only
+            sudo docker compose -f deploy/docker-compose.prod.yml --env-file .env pull
+            sudo docker compose -f deploy/docker-compose.prod.yml --env-file .env up -d
+            sudo docker image prune -f
+            echo "Deployment finished"

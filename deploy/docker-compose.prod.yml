@@ -1,0 +1,27 @@
+services:
+  backend:
+    image: ghcr.io/anshmeet15/todo-app/backend:latest
+    container_name: todo_backend
+    environment:
+      DJANGO_SECRET_KEY: ${DJANGO_SECRET_KEY}
+      DJANGO_DEBUG: "False"
+      DJANGO_ALLOWED_HOSTS: ${DJANGO_ALLOWED_HOSTS}
+      DJANGO_CORS_ALLOWED_ORIGINS: ${DJANGO_CORS_ALLOWED_ORIGINS}
+      DJANGO_DB_PATH: /app/data/db.sqlite3
+    volumes:
+      - sqlite_data:/app/data
+    ports:
+      - "8000:8000"
+    restart: unless-stopped
+
+  frontend:
+    image: ghcr.io/anshmeet15/todo-app/frontend:latest
+    container_name: todo_frontend
+    depends_on:
+      - backend
+    ports:
+      - "80:80"
+    restart: unless-stopped
+
+volumes:
+  sqlite_data:
